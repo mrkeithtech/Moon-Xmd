@@ -1,0 +1,79 @@
+name: Deploy Moon XMD Bot
+
+on:
+  workflow_dispatch:
+    inputs:
+      SESSION_ID:
+        description: 'WhatsApp Session (saved as creds.json)'
+        required: true
+        type: string
+      PHONE:
+        description: 'Your WhatsApp Number'
+        required: true
+        type: string
+      TIMEZONE:
+        description: 'Your Timezone'
+        required: true
+        default: 'Africa/Harare'
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # 1. Get your code
+    - uses: actions/checkout@v4
+    
+    # 2. Setup Node.js 18
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+    
+    # 3. Create your bot files
+    - name: Setup Bot Files
+      run: |
+        # Create session folder
+        mkdir -p session
+        
+        # Save session as creds.json
+        echo '${{ github.event.inputs.SESSION_ID }}' > session/creds.json
+        
+        # Create .env file
+        cat > .env << EOF
+        SESSION_ID=${{ github.event.inputs.SESSION_ID }}
+        ownerNumber=${{ github.event.inputs.PHONE }}
+        botName=*Mᴏᴏɴ Xᴍᴅ*
+        timezone=${{ github.event.inputs.TIMEZONE }}
+        Prefix=.
+        EOF
+        
+        echo "✅ Files created:"
+        echo "  - session/creds.json"
+        echo "  - .env"
+    
+    # 4. Install what your bot needs
+    - name: Install Dependencies
+      run: npm install --legacy-peer-deps
+    
+    # 5. Start your bot
+    - name: Start Bot
+      run: |
+        echo "🤖 Starting Moon XMD Bot..."
+        echo "📱 Owner: ${{ github.event.inputs.PHONE }}"
+        echo "🌍 Timezone: ${{ github.event.inputs.TIMEZONE }}"
+        echo "─────────────────────────────"
+        
+        # Start the bot and show what happens
+        timeout 90 npm start 2>&1 | tee bot.log &
+        sleep 25
+        
+        # Check if bot is running
+        if pgrep -f "node index.js" > /dev/null; then
+          echo "✅ SUCCESS: Bot is running!"
+          echo "📱 Check your WhatsApp for QR code"
+        else
+          echo "❌ Bot stopped. Check logs:"
+          tail -n 20 bot.log
+          exit 1
+        fi
