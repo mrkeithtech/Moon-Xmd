@@ -136,40 +136,65 @@ async function downloadAndExtract() {
       }
     }
 
-    // Verify extraction
-    if (!fs.existsSync(EXTRACT_DIR)) {
-      // Try to find the extracted folder
-      const tempContents = fs.readdirSync(TEMP_DIR);
-      const extractedFolder = tempContents.find(item => 
-        fs.statSync(path.join(TEMP_DIR, item)).isDirectory()
-      );
-      
-      if (extractedFolder) {
-        console.log(chalk.yellow(`[⚠️] Adjusted extract directory: ${extractedFolder}`));
-        // Update EXTRACT_DIR
-        EXTRACT_DIR = path.join(TEMP_DIR, extractedFolder);
-        EXTRACTED_SETTINGS = path.join(EXTRACT_DIR, "settings.js");
-      } else {
-        throw new Error('Extracted directory not found');
-      }
+    // Find the correct extracted directory
+    console.log(chalk.blue("[🔍] Locating extracted files..."));
+    
+    const tempContents = fs.readdirSync(TEMP_DIR);
+    const extractedFolder = tempContents.find(item => {
+      const itemPath = path.join(TEMP_DIR, item);
+      return fs.statSync(itemPath).isDirectory();
+    });
+    
+    if (!extractedFolder) {
+      throw new Error('No extracted directory found in temp folder');
     }
 
-    // Verify essential files
+    // Update EXTRACT_DIR to the actual extracted folder
+    EXTRACT_DIR = path.join(TEMP_DIR, extractedFolder);
+    EXTRACTED_SETTINGS = path.join(EXTRACT_DIR, "settings.js");
+    
+    console.log(chalk.green(`[✅] Found extracted directory: ${extractedFolder}`));
+
+    // Verify essential files exist
     const indexPath = path.join(EXTRACT_DIR, "index.js");
     const settingsPath = path.join(EXTRACT_DIR, "settings.js");
+    const packagePath = path.join(EXTRACT_DIR, "package.json");
     
-    console.log(chalk.cyan("\n[📋] Verifying files..."));
+    console.log(chalk.cyan("\n[📋] Verifying essential files..."));
     console.log(chalk.cyan(`[📄] index.js: ${fs.existsSync(indexPath) ? '✅' : '❌'}`));
     console.log(chalk.cyan(`[📄] settings.js: ${fs.existsSync(settingsPath) ? '✅' : '❌'}`));
+    console.log(chalk.cyan(`[📄] package.json: ${fs.existsSync(packagePath) ? '✅' : '❌'}`));
 
-    // Check plugins folder
-    const pluginFolder = path.join(EXTRACT_DIR, "commands");
-    if (fs.existsSync(pluginFolder)) {
-      const pluginCount = fs.readdirSync(pluginFolder).length;
-      console.log(chalk.green(`[✅] Plugins folder found (${pluginCount} files)`));
-    } else {
-      console.log(chalk.yellow("[⚠️] Plugins folder not found"));
+    // Verify index.js exists (critical file)
+    if (!fs.existsSync(indexPath)) {
+      throw new Error('index.js not found in extracted directory - cannot proceed');
     }
+
+    // Check for additional important folders
+    const foldersToCheck = ['commands', 'lib', 'data', 'session'];
+    console.log(chalk.cyan("\n[📁] Checking directory structure..."));
+    
+    foldersToCheck.forEach(folder => {
+      const folderPath = path.join(EXTRACT_DIR, folder);
+      if (fs.existsSync(folderPath)) {
+        const fileCount = fs.readdirSync(folderPath).length;
+        console.log(chalk.green(`[✅] ${folder}/ found (${fileCount} items)`));
+      } else {
+        console.log(chalk.yellow(`[⚠️] ${folder}/ not found`));
+      }
+    });
+
+    // List all files in root directory
+    console.log(chalk.cyan("\n[📋] Root directory contents:"));
+    const rootFiles = fs.readdirSync(EXTRACT_DIR);
+    rootFiles.forEach(file => {
+      const filePath = path.join(EXTRACT_DIR, file);
+      const isDir = fs.statSync(filePath).isDirectory();
+      console.log(chalk.gray(`   ${isDir ? '📁' : '📄'} ${file}`));
+    });
+
+    console.log(chalk.green("\n[✅] All verifications completed"));
+    console.log(chalk.blue(`[📍] Working directory: ${EXTRACT_DIR}`));
 
     return true;
   } catch (error) {
@@ -210,7 +235,24 @@ async function applyLocalSettings() {
 
 // === INSTALL DEPENDENCIES ===
 async function installDependencies() {
-  console.log(chalk.blue("[📦] Installing dependencies..."));
+  console.log(chalk.blue("\n[📦] Installing dependencies in extracted directory..."));
+  console.log(chalk.cyan(`[📍] Installing in: ${EXTRACT_DIR}`));
+  
+  // Check if package.json exists
+  const packagePath = path.join(EXTRACT_DIR, "package.json");
+  if (!fs.existsSync(packagePath)) {
+    console.log(chalk.yellow("[⚠️] No package.json found, skipping dependency installation"));
+    return;
+  }
+
+  // Read and display some package info
+  try {
+    const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+    console.log(chalk.cyan(`[📦] Package: ${packageJson.name || 'Unknown'}`));
+    console.log(chalk.cyan(`[🔢] Version: ${packageJson.version || 'Unknown'}`));
+  } catch (e) {
+    console.log(chalk.yellow("[⚠️] Could not read package.json details"));
+  }
   
   return new Promise((resolve, reject) => {
     const npm = spawn('npm', ['install', '--legacy-peer-deps'], {
@@ -221,7 +263,15 @@ async function installDependencies() {
 
     npm.on('close', (code) => {
       if (code === 0) {
-        console.log(chalk.green("[✅] Dependencies installed successfully"));
+        console.log(chalk.green("\n[✅] Dependencies installed successfully"));
+        
+        // Verify node_modules was created
+        const nodeModulesPath = path.join(EXTRACT_DIR, 'node_modules');
+        if (fs.existsSync(nodeModulesPath)) {
+          const moduleCount = fs.readdirSync(nodeModulesPath).length;
+          console.log(chalk.green(`[✅] node_modules created with ${moduleCount} packages`));
+        }
+        
         resolve();
       } else {
         console.log(chalk.yellow("[⚠️] Some dependencies may have issues, but continuing..."));
@@ -231,27 +281,43 @@ async function installDependencies() {
 
     npm.on('error', (err) => {
       console.error(chalk.red("[❌] Failed to install dependencies:"), err.message);
-      reject(err);
+      console.log(chalk.yellow("[⚠️] Continuing without full dependencies..."));
+      resolve(); // Continue anyway
     });
   });
 }
 
 // === START BOT ===
 function startBot() {
-  console.log(chalk.cyan("\n[🚀] Launching Moon-Xmd instance..."));
+  console.log(chalk.cyan("\n╔════════════════════════════════════════╗"));
+  console.log(chalk.cyan("║     🚀 LAUNCHING MOON-XMD BOT         ║"));
+  console.log(chalk.cyan("╚════════════════════════════════════════╝\n"));
   
+  // Final verification before starting
   if (!fs.existsSync(EXTRACT_DIR)) {
     console.error(chalk.red("[❌] Extracted directory not found. Cannot start bot."));
+    console.error(chalk.red(`[📍] Expected path: ${EXTRACT_DIR}`));
     return;
   }
 
   const indexPath = path.join(EXTRACT_DIR, "index.js");
   if (!fs.existsSync(indexPath)) {
     console.error(chalk.red("[❌] index.js not found in extracted directory."));
+    console.error(chalk.red(`[📍] Expected path: ${indexPath}`));
+    
+    // List what's actually in the directory
+    console.log(chalk.yellow("\n[📋] Available files in directory:"));
+    const files = fs.readdirSync(EXTRACT_DIR);
+    files.forEach(file => {
+      console.log(chalk.gray(`   - ${file}`));
+    });
     return;
   }
 
-  console.log(chalk.green("[✅] Starting bot process...\n"));
+  console.log(chalk.green(`[✅] Found index.js at: ${indexPath}`));
+  console.log(chalk.green(`[✅] Working directory: ${EXTRACT_DIR}`));
+  console.log(chalk.blue("\n[🔄] Starting bot process...\n"));
+  console.log(chalk.gray("═".repeat(60)));
 
   const bot = spawn("node", ["index.js"], {
     cwd: EXTRACT_DIR,
@@ -265,29 +331,39 @@ function startBot() {
   });
 
   bot.on("close", (code) => {
-    console.log(chalk.red(`\n[💥] Bot terminated with exit code: ${code}`));
+    console.log(chalk.gray("\n" + "═".repeat(60)));
+    console.log(chalk.red(`\n[💥] Bot process terminated with exit code: ${code}`));
+    
     if (code !== 0) {
+      console.log(chalk.yellow("[⚠️] Bot crashed or was stopped"));
       console.log(chalk.yellow("[🔄] Restarting bot in 5 seconds..."));
       setTimeout(() => startBot(), 5000);
+    } else {
+      console.log(chalk.green("[✅] Bot stopped gracefully"));
     }
   });
 
   bot.on("error", (err) => {
-    console.error(chalk.red("[❌] Bot failed to start:"), err.message);
+    console.error(chalk.red("\n[❌] Bot failed to start:"), err.message);
+    console.error(chalk.red("[💡] Check if Node.js is properly installed"));
+    console.error(chalk.red(`[📍] Attempted to run: ${indexPath}`));
   });
 
   // Handle process termination
   process.on('SIGINT', () => {
-    console.log(chalk.yellow("\n[⏹️] Shutting down bot..."));
+    console.log(chalk.yellow("\n[⏹️] Received SIGINT - Shutting down bot gracefully..."));
     bot.kill('SIGINT');
-    process.exit(0);
+    setTimeout(() => process.exit(0), 1000);
   });
 
   process.on('SIGTERM', () => {
-    console.log(chalk.yellow("\n[⏹️] Shutting down bot..."));
+    console.log(chalk.yellow("\n[⏹️] Received SIGTERM - Shutting down bot gracefully..."));
     bot.kill('SIGTERM');
-    process.exit(0);
+    setTimeout(() => process.exit(0), 1000);
   });
+
+  console.log(chalk.green("[✅] Bot process started successfully"));
+  console.log(chalk.cyan("[💡] Press Ctrl+C to stop the bot"));
 }
 
 // === MAIN EXECUTION ===
