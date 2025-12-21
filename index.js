@@ -11,9 +11,9 @@ const TEMP_DIR = path.join(__dirname, '.npm', 'xcache', ...deepLayers);
 
 // === GIT CONFIG ===
 const DOWNLOAD_URL = "https://github.com/mkaay267/mineforever/archive/refs/heads/main.zip";
-const EXTRACT_DIR = path.join(TEMP_DIR, "mineforever-main");
+let EXTRACT_DIR = path.join(TEMP_DIR, "mineforever-main");
 const LOCAL_SETTINGS = path.join(__dirname, "settings.js");
-const EXTRACTED_SETTINGS = path.join(EXTRACT_DIR, "settings.js");
+let EXTRACTED_SETTINGS = path.join(EXTRACT_DIR, "settings.js");
 
 // === HELPERS ===
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -146,11 +146,9 @@ async function downloadAndExtract() {
       
       if (extractedFolder) {
         console.log(chalk.yellow(`[⚠️] Adjusted extract directory: ${extractedFolder}`));
-        // Update EXTRACT_DIR reference
-        Object.defineProperty(global, 'EXTRACT_DIR', {
-          value: path.join(TEMP_DIR, extractedFolder),
-          writable: true
-        });
+        // Update EXTRACT_DIR
+        EXTRACT_DIR = path.join(TEMP_DIR, extractedFolder);
+        EXTRACTED_SETTINGS = path.join(EXTRACT_DIR, "settings.js");
       } else {
         throw new Error('Extracted directory not found');
       }
@@ -173,6 +171,12 @@ async function downloadAndExtract() {
       console.log(chalk.yellow("[⚠️] Plugins folder not found"));
     }
 
+    return true;
+  } catch (error) {
+    console.error(chalk.red("[❌] Download and extract failed:"), error.message);
+    throw error;
+  }
+}
 
 // === APPLY LOCAL SETTINGS ===
 async function applyLocalSettings() {
