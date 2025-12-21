@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: moon-xmd-bot
+    runtime: node
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install --legacy-peer-deps
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 18.20.0
+      - key: SESSION_ID
+        value: ""
+      - key: Prefix
+        value: "."
+      - key: ownerNumber
+        value: false
+      - key: "263776509966"
+        value: "Moon-Xmd_v1"
+      - key: timezone
+        value: "Africa/Harare"

@@ -10,24 +10,21 @@ if (fs.existsSync('.env')) require('dotenv').config({ path: __dirname+'/.env' })
 
 
 
-
-
 const settings = {
 
 //======= BOT SETTINGS ============//
 
-  SESSION_ID: process.env.SESSION_ID || '',
+  SESSION_ID: process.env.SESSION_ID || 'Paste Ur SESSION_ID Here',
 
+  botName: process.env.botName || "*Mᴏᴏɴ Xᴍᴅ*",
  
   timezone: process.env.timezone || "Africa/Harare",
   
-  botOwner: process.env.botOwner || 'Keith',
   
-  ownerNumber: process.env.ownerNumber || '263789745277',
-  
-  // Multi-prefix support
-  Prefix: process.env.Prefix || ['','!','.','#','&']
-  
+  ownerNumber: process.env.ownerNumber || '263776509966',
+ 
+  Prefix: process.env.Prefix || '.'
+
 };
 
 module.exports = settings;

@@ -1,7 +1,7 @@
 {
-  "name": "MOON XMD",
+  "name": "moon-xmd",
   "version": "1.0.0",
-  "description": "WhatsApp Bot",
+  "description": "A WhatsApp Bot Developed By Keith Tech",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -13,7 +13,7 @@
     "install:panel": "npm install --legacy-peer-deps",
     "install:force": "npm install --force",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "docker:build": "docker build -t docker run -e SESSION_ID=$SESSION_ID Moon~"
+    "docker:build": "docker build -t docker run -e SESSION_ID=$SESSION_ID Moon"
   },
   "keywords": [
     "whatsapp-bot"
@@ -21,14 +21,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@adiwajshing/keyed-db": "^0.2.4",
+    "@adiwajshing/keyed-db": "latest",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@hapi/boom": "^10.0.1",
     "@types/node": "^18.0.6",
-    "@whiskeysockets/baileys": "^6.7.21",
+    "@whiskeysockets/baileys": "^v7.0.0-rc.9",
     "awesome-phonenumber": "^5.9.0",
-    "adm-zip": "^0.5.16",
     "axios": "^1.8.4",
+    "adm-zip": "^0.5.16",
     "chalk": "^4.1.2",
     "cheerio": "^1.0.0-rc.12",
     "cookie": "^0.5.0",
