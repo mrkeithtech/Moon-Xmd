@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: moon-xmd-bot
+    name: moon-xmd-v1
     runtime: node
     env: node
     region: oregon
@@ -16,8 +16,6 @@ services:
       - key: Prefix
         value: "."
       - key: ownerNumber
-        value: false
-      - key: "263776509966"
-        value: "Moon-Xmd_v1"
+        value: "263776509966"
       - key: timezone
         value: "Africa/Harare"

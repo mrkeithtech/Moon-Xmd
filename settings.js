@@ -1,29 +1,24 @@
-/*==================================
+/*
 
-      🌙 MOON XMD 🌙
-  DEVELOPED BY KEITH TECH
-    
-================================*/
-
-const fs = require('fs')
-if (fs.existsSync('.env')) require('dotenv').config({ path: __dirname+'/.env' })
+M O O N   X M D   S E T T I N G S
 
 
+*/
 
 const settings = {
 
-//======= BOT SETTINGS ============//
 
-  SESSION_ID: process.env.SESSION_ID || 'Paste Ur SESSION_ID Here',
+  SESSION_ID: process.env.SESSION_ID || 'Paste Ur SESSION_ID Here', // Make sure it starts with Moon;;;
 
-  botName: process.env.botName || "*Mᴏᴏɴ Xᴍᴅ*",
+  botName: process.env.botName || "𝐌𝐎𝐎𝐍 𝐗𝐌𝐃 🌙",
  
   timezone: process.env.timezone || "Africa/Harare",
   
   
   ownerNumber: process.env.ownerNumber || '263776509966',
  
-  Prefix: process.env.Prefix || '.'
+   // Examples: '.' or ['.', '!', '#', '$']
+  Prefix: process.env.Prefix ? (process.env.Prefix.includes(',') ? process.env.Prefix.split(',') : process.env.Prefix) : ['.', '!', '#', '$'],
 
 };
 
